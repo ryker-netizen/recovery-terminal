@@ -1,29 +1,416 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>RECOVERY TERMINAL</title>
-
-<link rel="stylesheet" href="style.css">
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>VZ // RECOVERY TERMINAL</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=VT323&family=IBM+Plex+Mono:wght@400;700&display=swap');
+        
+        :root {
+            --bg: #000000;
+            --bg-dark: #050505;
+            --text: #c0c0c0;
+            --text-dim: #606060;
+            --text-faint: #303030;
+            --accent: #8b0000;
+            --accent-bright: #ff0000;
+            --blood-glow: #ff0000;
+            --border: #1a1a1a;
+            --font-term: 'VT323', 'Courier New', monospace;
+            --font-main: 'IBM Plex Mono', 'Courier New', monospace;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+        
+        *:focus {
+            outline: none !important;
+        }
+        
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font-main);
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            cursor: crosshair;
+        }
+        
+        .noise-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0,0,0,0.04) 0px,
+                rgba(0,0,0,0.04) 1px,
+                transparent 1px,
+                transparent 3px
+            );
+            animation: noiseShift 0.5s infinite;
+        }
+        
+        @keyframes noiseShift {
+            0% { background-position: 0 0; }
+            100% { background-position: 0 100px; }
+        }
+        
+        .glow-overlay {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 700px;
+            height: 700px;
+            background: radial-gradient(circle, rgba(139,0,0,0.08) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+            animation: glowPulse 3s infinite;
+        }
+        
+        @keyframes glowPulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+        
+        .terminal-wrapper {
+            position: relative;
+            z-index: 1;
+            width: 95%;
+            max-width: 800px;
+            height: 90vh;
+            margin: 5vh auto;
+            background: rgba(5,5,5,0.95);
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 0 40px rgba(139,0,0,0.2);
+        }
+        
+        .terminal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            background: #0a0a0a;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+        
+        .terminal-title {
+            font-family: var(--font-term);
+            font-size: 0.85rem;
+            letter-spacing: 3px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+        }
+        
+        .terminal-status {
+            font-family: var(--font-term);
+            font-size: 0.7rem;
+            letter-spacing: 1px;
+            color: var(--accent-bright);
+            animation: statusBlink 2s infinite;
+        }
+        
+        @keyframes statusBlink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+        
+        .terminal-output {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            font-family: var(--font-term);
+            font-size: 1.1rem;
+            letter-spacing: 1px;
+            line-height: 1.5;
+            min-height: 0;
+        }
+        
+        .line {
+            color: var(--text);
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        
+        .line.green {
+            color: #00cc00;
+        }
+        
+        .line.red {
+            color: var(--accent-bright);
+            text-shadow: 0 0 10px rgba(255,0,0,0.5);
+        }
+        
+        .line.yellow {
+            color: #ccaa00;
+        }
+        
+        .line.dim {
+            color: var(--text-dim);
+        }
+        
+        .line.faint {
+            color: var(--text-faint);
+        }
+        
+        .line.system {
+            color: var(--text-dim);
+        }
+        
+        .line.glitch-text {
+            animation: textGlitch 2s infinite;
+        }
+        
+        @keyframes textGlitch {
+            0%, 92%, 100% { transform: translateX(0); opacity: 1; }
+            93% { transform: translateX(-2px); opacity: 0.5; }
+            95% { transform: translateX(2px); opacity: 1; }
+            97% { transform: translateX(-1px); opacity: 0.7; }
+        }
+        
+        .cursor-block {
+            display: inline-block;
+            width: 10px;
+            height: 18px;
+            background: var(--accent-bright);
+            animation: cursorBlink 0.8s infinite;
+            vertical-align: middle;
+        }
+        
+        @keyframes cursorBlink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+        
+        .screen-glitch {
+            animation: screenGlitch 0.3s;
+        }
+        
+        @keyframes screenGlitch {
+            0%, 100% { filter: none; }
+            25% { filter: invert(100%); }
+            50% { filter: hue-rotate(90deg) invert(100%); }
+            75% { filter: sepia(100%); }
+        }
+        
+        .morse-indicator {
+            position: fixed;
+            bottom: 10px;
+            right: 20px;
+            font-family: var(--font-term);
+            font-size: 0.6rem;
+            letter-spacing: 3px;
+            color: var(--text-faint);
+            z-index: 10;
+            animation: morseFade 3s infinite;
+        }
+        
+        @keyframes morseFade {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.7; }
+        }
+        
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #050505;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent);
+        }
+        
+        @media (max-width: 768px) {
+            .terminal-output {
+                font-size: 0.9rem;
+                padding: 15px;
+            }
+            
+            .terminal-wrapper {
+                height: 95vh;
+                margin: 2.5vh auto;
+            }
+        }
+    </style>
 </head>
-
-<body>
-
-<div class="screen">
-
-<div class="scanlines"></div>
-
-<div id="terminal">
-
-</div>
-
-</div>
-
-
-<script src="script.js"></script>
-
+<body class="login-body">
+    <div class="noise-overlay"></div>
+    <div class="glow-overlay"></div>
+    
+    <div class="terminal-wrapper">
+        <div class="terminal-header">
+            <span class="terminal-title">VZ // RECOVERY TERMINAL v.81</span>
+            <span class="terminal-status">● REC</span>
+        </div>
+        
+        <div class="terminal-output" id="terminal"></div>
+    </div>
+    
+    <div class="morse-indicator">... --- ...</div>
+    
+    <script>
+        (function() {
+            const terminal = document.getElementById('terminal');
+            let speed = 25;
+            
+            function sleep(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+            
+            async function write(text, cls = '') {
+                const span = document.createElement('span');
+                span.className = 'line ' + cls;
+                terminal.appendChild(span);
+                
+                for (let char of text) {
+                    span.textContent += char;
+                    if (char !== ' ' && Math.random() < 0.03) {
+                        span.textContent = span.textContent.slice(0, -1) + '█';
+                        await sleep(20);
+                        span.textContent = span.textContent.slice(0, -1) + char;
+                    }
+                    await sleep(speed + Math.random() * 20);
+                }
+                
+                terminal.scrollTop = terminal.scrollHeight;
+            }
+            
+            function addBlank() {
+                const el = document.createElement('div');
+                el.className = 'line';
+                el.textContent = ' ';
+                terminal.appendChild(el);
+                terminal.scrollTop = terminal.scrollHeight;
+            }
+            
+            function glitchScreen() {
+                document.body.classList.add('screen-glitch');
+                setTimeout(() => document.body.classList.remove('screen-glitch'), 300);
+            }
+            
+            function updateMorse() {
+                const morseEl = document.querySelector('.morse-indicator');
+                const signals = ['... --- ...', '-...- . ...--', '... --- ...  -...- . ...--'];
+                let i = 0;
+                setInterval(() => {
+                    morseEl.textContent = signals[i % signals.length];
+                    i++;
+                }, 4000);
+            }
+            
+            async function boot() {
+                await sleep(500);
+                await write('ROM BIOS UTILITY V4.51PG', 'system');
+                await sleep(300);
+                await write('AMIBIOS (C) 2026 Retro Computing, Inc.', 'system');
+                await write('CPU : Retro Core(TM) @ 4.70 GHz', 'system');
+                await write('MEMORY TEST : 65536KB OK', 'green');
+                await sleep(600);
+                
+                addBlank();
+                await write('Checking storage devices...', 'dim');
+                await write('PRIMARY DRIVE ........ FAILED', 'red');
+                await write('SECONDARY DRIVE ...... FAILED', 'red');
+                glitchScreen();
+                await sleep(500);
+                
+                addBlank();
+                await write('RECOVERY PARTITION FOUND', 'green');
+                await sleep(800);
+                
+                addBlank();
+                await write('MOUNTING UNKNOWN DATA...', 'dim');
+                await sleep(1200);
+                
+                addBlank();
+                await write('SYSTEM FAILURE', 'red');
+                await write('NO OPERATING SYSTEM FOUND', 'red');
+                glitchScreen();
+                await sleep(1200);
+                
+                addBlank();
+                await write('Attempting emergency recovery...', 'yellow');
+                await sleep(1000);
+                
+                addBlank();
+                await write('SEARCHING AVAILABLE ARCHIVES...', 'dim');
+                await sleep(1200);
+                
+                addBlank();
+                await write('ARCHIVE_01 ......... CORRUPTED', 'faint');
+                await write('ARCHIVE_02 ......... EMPTY', 'faint');
+                await write('ARCHIVE_03 ......... UNKNOWN', 'faint');
+                await sleep(1200);
+                
+                addBlank();
+                await write('ONE ARCHIVE REMAINS.', 'yellow glitch-text');
+                await sleep(800);
+                
+                addBlank();
+                await write('THE SYSTEM DOES NOT REMEMBER IT.', 'yellow');
+                await sleep(600);
+                await write('ANOTHER ARCHIVE DOES.', 'yellow');
+                glitchScreen();
+                await sleep(1500);
+                
+                addBlank();
+                await write('RECOVERING METADATA...', 'dim');
+                await sleep(1800);
+                
+                addBlank();
+                await write('NAME: [REDACTED]', 'red');
+                await write('DATE CREATED: 18.06.2024', 'system');
+                await write('LAST MODIFIED: 01.08.2024', 'system');
+                await write('STATUS: LOCKED', 'red');
+                await sleep(1500);
+                
+                addBlank();
+                await write('ACCESS ATTEMPT REQUIRED', 'yellow');
+                await sleep(1200);
+                
+                addBlank();
+                await write('PASSWORD INPUT DISABLED', 'red');
+                await write('REASON: WRITE FAILURE', 'red');
+                glitchScreen();
+                await sleep(1800);
+                
+                addBlank();
+                await write('REDIRECTING TO ARCHIVE LOCATION...', 'green');
+                await sleep(2500);
+                
+                addBlank();
+                await write('... --- ...  -...- . ...--', 'faint');
+                await sleep(1500);
+                
+                window.location.href = 'https://ryker-netizen.github.io/VZ_CASE-81/index.html';
+            }
+            
+            updateMorse();
+            boot();
+        })();
+    </script>
 </body>
 </html>

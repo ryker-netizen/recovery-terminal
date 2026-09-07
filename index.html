@@ -337,10 +337,181 @@
     <div class="morse-indicator">... --- ...</div>
     
     <script>
+        
         (function() {
             const terminal = document.getElementById('terminal');
             const cursor = document.getElementById('customCursor');
             let speed = 20;
+
+            // VZ RECOVERY AMBIENT ENGINE
+
+const AudioContext = window.AudioContext || window.webkitAudioContext;
+let audioCtx;
+let master;
+let drone;
+let sub;
+let noise;
+
+function initAudio(){
+
+if(audioCtx) return;
+
+audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+master = audioCtx.createGain();
+master.gain.value = 0.12;
+master.connect(audioCtx.destination);
+
+
+// низкий гул
+
+drone = audioCtx.createOscillator();
+const droneGain = audioCtx.createGain();
+
+drone.type = "sine";
+drone.frequency.value = 47;
+
+droneGain.gain.value = 0.35;
+
+drone.connect(droneGain);
+droneGain.connect(master);
+
+drone.start();
+
+
+// второй слой
+
+sub = audioCtx.createOscillator();
+const subGain = audioCtx.createGain();
+
+sub.type="triangle";
+sub.frequency.value=91;
+
+subGain.gain.value=0.08;
+
+sub.connect(subGain);
+subGain.connect(master);
+
+sub.start();
+
+}
+
+const master = audioCtx.createGain();
+master.gain.value = 0.12;
+master.connect(audioCtx.destination);
+
+
+// низкий гул
+
+const drone = audioCtx.createOscillator();
+const droneGain = audioCtx.createGain();
+
+drone.type = "sine";
+drone.frequency.value = 47;
+
+droneGain.gain.value = 0.35;
+
+drone.connect(droneGain);
+droneGain.connect(master);
+
+drone.start();
+
+
+// второй слой - нестабильность
+
+const sub = audioCtx.createOscillator();
+const subGain = audioCtx.createGain();
+
+sub.type="triangle";
+sub.frequency.value=91;
+
+subGain.gain.value=0.08;
+
+sub.connect(subGain);
+subGain.connect(master);
+
+sub.start();
+
+
+// шум кассеты
+
+const bufferSize = audioCtx.sampleRate * 2;
+const noiseBuffer = audioCtx.createBuffer(
+    1,
+    bufferSize,
+    audioCtx.sampleRate
+);
+
+const output = noiseBuffer.getChannelData(0);
+
+for(let i=0;i<bufferSize;i++){
+    output[i]=(Math.random()*2-1)*0.15;
+}
+
+
+const noise = audioCtx.createBufferSource();
+noise.buffer=noiseBuffer;
+noise.loop=true;
+
+
+const noiseGain=audioCtx.createGain();
+noiseGain.gain.value=0.04;
+
+
+noise.connect(noiseGain);
+noiseGain.connect(master);
+
+noise.start();
+
+
+// случайные "ошибки системы"
+
+function systemGlitch(){
+
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+
+    osc.type="square";
+    osc.frequency.value=
+        300 + Math.random()*700;
+
+    gain.gain.value=0.025;
+
+
+    osc.connect(gain);
+    gain.connect(master);
+
+
+    osc.start();
+
+    osc.stop(
+        audioCtx.currentTime + 
+        0.05 + Math.random()*0.15
+    );
+}
+
+
+setInterval(()=>{
+
+    if(Math.random()>0.55){
+        systemGlitch();
+    }
+
+},4000);
+
+document.addEventListener(
+"click",
+()=>{
+
+initAudio();
+
+if(audioCtx.state==="suspended"){
+    audioCtx.resume();
+}
+
+},
+{once:true}
+);
             
             // Кастомный курсор
             document.addEventListener('mousemove', function(e) {
@@ -424,6 +595,7 @@
                 await sleep(1000);
                 
                 addBlank();
+                systemGlitch();
                 await write('SYSTEM FAILURE', 'red');
                 await write('NO OPERATING SYSTEM FOUND', 'red');
                 await sleep(1000);
@@ -433,6 +605,33 @@
                 await sleep(800);
                 
                 addBlank();
+                function diskNoise(){
+
+let osc = audioCtx.createOscillator();
+let gain = audioCtx.createGain();
+
+osc.type="square";
+osc.frequency.value=80;
+
+gain.gain.value=0.03;
+
+osc.connect(gain);
+gain.connect(master);
+
+osc.start();
+
+osc.stop(audioCtx.currentTime+0.08);
+
+}
+
+
+setInterval(()=>{
+
+if(Math.random()>0.5){
+diskNoise();
+}
+
+},3000);
                 await write('SEARCHING AVAILABLE ARCHIVES...', 'dim');
                 await sleep(1000);
                 
@@ -444,8 +643,16 @@
                 
                 addBlank();
                 addBlank();
+                drone.frequency.exponentialRampToValueAtTime(
+30,
+audioCtx.currentTime+2
+);
                 await write('ONE ARCHIVE REMAINS.', 'gold big-reveal');
                 await sleep(1000);
+                drone.frequency.exponentialRampToValueAtTime(
+47,
+audioCtx.currentTime+3
+);
                 
                 addBlank();
                 await write('THE SYSTEM DOES NOT REMEMBER IT.', 'orange');
@@ -488,5 +695,6 @@
             boot();
         })();
     </script>
+<audio id="ambient" autoplay></audio>
 </body>
 </html>

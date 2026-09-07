@@ -10,12 +10,14 @@
         :root {
             --bg: #000000;
             --bg-dark: #050505;
-            --text: #c0c0c0;
-            --text-dim: #606060;
-            --text-faint: #303030;
+            --text: #d0d0d0;
+            --text-dim: #707070;
+            --text-faint: #404040;
             --accent: #8b0000;
-            --accent-bright: #ff0000;
-            --blood-glow: #ff0000;
+            --accent-bright: #ff2020;
+            --neon: #ff3030;
+            --orange: #cc6600;
+            --gold: #c8a000;
             --border: #1a1a1a;
             --font-term: 'VT323', 'Courier New', monospace;
             --font-main: 'IBM Plex Mono', 'Courier New', monospace;
@@ -44,7 +46,30 @@
             height: 100vh;
             width: 100vw;
             overflow: hidden;
-            cursor: crosshair;
+            cursor: none;
+        }
+        
+        /* КАСТОМНЫЙ КУРСОР ДЛЯ ВИДЕО */
+        .custom-cursor {
+            position: fixed;
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--neon);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            box-shadow: 0 0 15px rgba(255,48,48,0.7), 0 0 30px rgba(255,48,48,0.3);
+            animation: cursorPulse 1.5s infinite;
+            transition: transform 0.1s;
+        }
+        
+        .custom-cursor.clicked {
+            transform: scale(0.7);
+        }
+        
+        @keyframes cursorPulse {
+            0%, 100% { box-shadow: 0 0 15px rgba(255,48,48,0.7), 0 0 30px rgba(255,48,48,0.3); }
+            50% { box-shadow: 0 0 25px rgba(255,48,48,1), 0 0 50px rgba(255,48,48,0.5); }
         }
         
         .noise-overlay {
@@ -75,38 +100,58 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 700px;
-            height: 700px;
-            background: radial-gradient(circle, rgba(139,0,0,0.08) 0%, transparent 70%);
+            width: 800px;
+            height: 800px;
+            background: radial-gradient(circle, rgba(139,0,0,0.1) 0%, transparent 70%);
             pointer-events: none;
             z-index: 0;
             animation: glowPulse 3s infinite;
         }
         
         @keyframes glowPulse {
-            0%, 100% { opacity: 0.5; }
+            0%, 100% { opacity: 0.6; }
             50% { opacity: 1; }
         }
         
         .terminal-wrapper {
             position: relative;
             z-index: 1;
-            width: 95%;
-            max-width: 800px;
-            height: 90vh;
-            margin: 5vh auto;
-            background: rgba(5,5,5,0.95);
+            width: 90%;
+            max-width: 850px;
+            height: 88vh;
+            margin: 6vh auto;
+            background: rgba(5,5,5,0.98);
             border: 1px solid var(--border);
             display: flex;
             flex-direction: column;
-            box-shadow: 0 0 40px rgba(139,0,0,0.2);
+            box-shadow: 
+                0 0 60px rgba(139,0,0,0.25),
+                inset 0 0 60px rgba(139,0,0,0.05);
+            position: relative;
+        }
+        
+        .terminal-wrapper::before {
+            content: '';
+            position: absolute;
+            top: -1px;
+            left: -1px;
+            right: -1px;
+            bottom: -1px;
+            border: 1px solid rgba(139,0,0,0.3);
+            pointer-events: none;
+            animation: borderGlow 3s infinite;
+        }
+        
+        @keyframes borderGlow {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.7; }
         }
         
         .terminal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 10px 15px;
+            padding: 12px 20px;
             background: #0a0a0a;
             border-bottom: 1px solid var(--border);
             flex-shrink: 0;
@@ -114,37 +159,39 @@
         
         .terminal-title {
             font-family: var(--font-term);
-            font-size: 0.85rem;
-            letter-spacing: 3px;
+            font-size: 0.9rem;
+            letter-spacing: 4px;
             color: var(--text-dim);
             text-transform: uppercase;
+            text-shadow: 0 0 10px rgba(255,48,48,0.3);
         }
         
         .terminal-status {
             font-family: var(--font-term);
             font-size: 0.7rem;
-            letter-spacing: 1px;
-            color: var(--accent-bright);
+            letter-spacing: 2px;
+            color: var(--neon);
             animation: statusBlink 2s infinite;
         }
         
         @keyframes statusBlink {
             0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
+            50% { opacity: 0.4; }
         }
         
         .terminal-output {
             flex: 1;
-            padding: 20px;
+            padding: 25px;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 3px;
+            gap: 4px;
             font-family: var(--font-term);
-            font-size: 1.1rem;
-            letter-spacing: 1px;
-            line-height: 1.5;
+            font-size: 1.15rem;
+            letter-spacing: 1.5px;
+            line-height: 1.6;
             min-height: 0;
+            scroll-behavior: smooth;
         }
         
         .line {
@@ -155,15 +202,22 @@
         
         .line.green {
             color: #00cc00;
+            text-shadow: 0 0 8px rgba(0,204,0,0.5);
         }
         
         .line.red {
             color: var(--accent-bright);
-            text-shadow: 0 0 10px rgba(255,0,0,0.5);
+            text-shadow: 0 0 12px rgba(255,32,32,0.6);
         }
         
-        .line.yellow {
-            color: #ccaa00;
+        .line.orange {
+            color: var(--orange);
+            text-shadow: 0 0 10px rgba(204,102,0,0.5);
+        }
+        
+        .line.gold {
+            color: var(--gold);
+            text-shadow: 0 0 15px rgba(200,160,0,0.6);
         }
         
         .line.dim {
@@ -189,13 +243,28 @@
             97% { transform: translateX(-1px); opacity: 0.7; }
         }
         
+        .line.big-reveal {
+            font-size: 1.8rem;
+            letter-spacing: 5px;
+            text-align: center;
+            padding: 20px;
+            text-transform: uppercase;
+            animation: revealGlow 2s infinite;
+        }
+        
+        @keyframes revealGlow {
+            0%, 100% { text-shadow: 0 0 15px rgba(255,48,48,0.5); }
+            50% { text-shadow: 0 0 40px rgba(255,48,48,1); }
+        }
+        
         .cursor-block {
             display: inline-block;
             width: 10px;
             height: 18px;
-            background: var(--accent-bright);
+            background: var(--neon);
             animation: cursorBlink 0.8s infinite;
             vertical-align: middle;
+            box-shadow: 0 0 10px rgba(255,48,48,0.8);
         }
         
         @keyframes cursorBlink {
@@ -203,24 +272,13 @@
             51%, 100% { opacity: 0; }
         }
         
-        .screen-glitch {
-            animation: screenGlitch 0.3s;
-        }
-        
-        @keyframes screenGlitch {
-            0%, 100% { filter: none; }
-            25% { filter: invert(100%); }
-            50% { filter: hue-rotate(90deg) invert(100%); }
-            75% { filter: sepia(100%); }
-        }
-        
         .morse-indicator {
             position: fixed;
-            bottom: 10px;
-            right: 20px;
+            bottom: 15px;
+            right: 25px;
             font-family: var(--font-term);
-            font-size: 0.6rem;
-            letter-spacing: 3px;
+            font-size: 0.65rem;
+            letter-spacing: 4px;
             color: var(--text-faint);
             z-index: 10;
             animation: morseFade 3s infinite;
@@ -232,7 +290,7 @@
         }
         
         ::-webkit-scrollbar {
-            width: 4px;
+            width: 3px;
         }
         
         ::-webkit-scrollbar-track {
@@ -252,11 +310,18 @@
             .terminal-wrapper {
                 height: 95vh;
                 margin: 2.5vh auto;
+                width: 95%;
+            }
+            
+            .line.big-reveal {
+                font-size: 1.3rem;
+                letter-spacing: 3px;
             }
         }
     </style>
 </head>
 <body class="login-body">
+    <div class="custom-cursor" id="customCursor"></div>
     <div class="noise-overlay"></div>
     <div class="glow-overlay"></div>
     
@@ -274,7 +339,22 @@
     <script>
         (function() {
             const terminal = document.getElementById('terminal');
-            let speed = 25;
+            const cursor = document.getElementById('customCursor');
+            let speed = 20;
+            
+            // Кастомный курсор
+            document.addEventListener('mousemove', function(e) {
+                cursor.style.left = (e.clientX - 10) + 'px';
+                cursor.style.top = (e.clientY - 10) + 'px';
+            });
+            
+            document.addEventListener('mousedown', function() {
+                cursor.classList.add('clicked');
+            });
+            
+            document.addEventListener('mouseup', function() {
+                cursor.classList.remove('clicked');
+            });
             
             function sleep(ms) {
                 return new Promise(resolve => setTimeout(resolve, ms));
@@ -287,15 +367,15 @@
                 
                 for (let char of text) {
                     span.textContent += char;
-                    if (char !== ' ' && Math.random() < 0.03) {
+                    if (char !== ' ' && Math.random() < 0.02) {
                         span.textContent = span.textContent.slice(0, -1) + '█';
-                        await sleep(20);
+                        await sleep(15);
                         span.textContent = span.textContent.slice(0, -1) + char;
                     }
-                    await sleep(speed + Math.random() * 20);
+                    await sleep(speed + Math.random() * 15);
                 }
                 
-                terminal.scrollTop = terminal.scrollHeight;
+                autoScroll();
             }
             
             function addBlank() {
@@ -303,12 +383,11 @@
                 el.className = 'line';
                 el.textContent = ' ';
                 terminal.appendChild(el);
-                terminal.scrollTop = terminal.scrollHeight;
+                autoScroll();
             }
             
-            function glitchScreen() {
-                document.body.classList.add('screen-glitch');
-                setTimeout(() => document.body.classList.remove('screen-glitch'), 300);
+            function autoScroll() {
+                terminal.scrollTop = terminal.scrollHeight;
             }
             
             function updateMorse() {
@@ -322,80 +401,77 @@
             }
             
             async function boot() {
-                await sleep(500);
-                await write('ROM BIOS UTILITY V4.51PG', 'system');
                 await sleep(300);
-                await write('AMIBIOS (C) 2026 Retro Computing, Inc.', 'system');
-                await write('CPU : Retro Core(TM) @ 4.70 GHz', 'system');
+                await write('VZ BOOT SEQUENCE v4.51PG', 'system');
+                await sleep(200);
+                await write('SYSTEM INITIALIZED // 2026', 'system');
+                await write('CPU : VZ CORE(TM) @ 4.70 GHz', 'system');
                 await write('MEMORY TEST : 65536KB OK', 'green');
-                await sleep(600);
+                await sleep(500);
                 
                 addBlank();
                 await write('Checking storage devices...', 'dim');
                 await write('PRIMARY DRIVE ........ FAILED', 'red');
                 await write('SECONDARY DRIVE ...... FAILED', 'red');
-                glitchScreen();
                 await sleep(500);
                 
                 addBlank();
                 await write('RECOVERY PARTITION FOUND', 'green');
-                await sleep(800);
+                await sleep(700);
                 
                 addBlank();
                 await write('MOUNTING UNKNOWN DATA...', 'dim');
-                await sleep(1200);
+                await sleep(1000);
                 
                 addBlank();
                 await write('SYSTEM FAILURE', 'red');
                 await write('NO OPERATING SYSTEM FOUND', 'red');
-                glitchScreen();
-                await sleep(1200);
-                
-                addBlank();
-                await write('Attempting emergency recovery...', 'yellow');
                 await sleep(1000);
                 
                 addBlank();
+                await write('Attempting emergency recovery...', 'orange');
+                await sleep(800);
+                
+                addBlank();
                 await write('SEARCHING AVAILABLE ARCHIVES...', 'dim');
-                await sleep(1200);
+                await sleep(1000);
                 
                 addBlank();
                 await write('ARCHIVE_01 ......... CORRUPTED', 'faint');
                 await write('ARCHIVE_02 ......... EMPTY', 'faint');
                 await write('ARCHIVE_03 ......... UNKNOWN', 'faint');
-                await sleep(1200);
+                await sleep(1000);
                 
                 addBlank();
-                await write('ONE ARCHIVE REMAINS.', 'yellow glitch-text');
-                await sleep(800);
+                addBlank();
+                await write('ONE ARCHIVE REMAINS.', 'gold big-reveal');
+                await sleep(1000);
                 
                 addBlank();
-                await write('THE SYSTEM DOES NOT REMEMBER IT.', 'yellow');
-                await sleep(600);
-                await write('ANOTHER ARCHIVE DOES.', 'yellow');
-                glitchScreen();
+                await write('THE SYSTEM DOES NOT REMEMBER IT.', 'orange');
+                await sleep(500);
+                await write('ANOTHER ARCHIVE DOES.', 'red big-reveal');
                 await sleep(1500);
                 
                 addBlank();
                 await write('RECOVERING METADATA...', 'dim');
-                await sleep(1800);
+                await sleep(1500);
                 
                 addBlank();
                 await write('NAME: [REDACTED]', 'red');
                 await write('DATE CREATED: 18.06.2024', 'system');
                 await write('LAST MODIFIED: 01.08.2024', 'system');
                 await write('STATUS: LOCKED', 'red');
-                await sleep(1500);
+                await sleep(1200);
                 
                 addBlank();
-                await write('ACCESS ATTEMPT REQUIRED', 'yellow');
-                await sleep(1200);
+                await write('ACCESS ATTEMPT REQUIRED', 'orange');
+                await sleep(1000);
                 
                 addBlank();
                 await write('PASSWORD INPUT DISABLED', 'red');
                 await write('REASON: WRITE FAILURE', 'red');
-                glitchScreen();
-                await sleep(1800);
+                await sleep(1500);
                 
                 addBlank();
                 await write('REDIRECTING TO ARCHIVE LOCATION...', 'green');
